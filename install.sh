@@ -49,6 +49,7 @@ check_n_install_debian_deps() {
         echo 'Something went wrong while installing dependencies!' >&2
     fi
     echo 'Finished installation of debian dependencies.'
+    install_and_check
 }
 
 check_n_install_centos_deps() {
@@ -57,6 +58,7 @@ check_n_install_centos_deps() {
         echo 'Something went wrong while installing dependencies.' >&2
     fi
     echo 'Finished installation of CentOS dependencies.'
+    install_and_check
 }
 
 check_n_install_centos7_deps() {
@@ -65,6 +67,7 @@ check_n_install_centos7_deps() {
         echo 'Something went wrong while installing dependencies.' >&2
     fi
     echo 'Finished installation of CentOS 7 dependencies.'
+    install_and_check
 }
 
 # Проверяем наличие аппаратный RAID контроллеров и в случае наличия устанавливаем ПО для их мониторинга
@@ -193,6 +196,27 @@ start_smartd_tests() {
         echo 'smartd failed to start. This may be caused by absence of disks SMART able to monitor.' >&2
         tail /var/log/messages
     fi
+}
+
+install_and_check(){
+# Diagnostic tools installation
+check_n_install_diag_tools
+
+# Monitoring script installation
+install_monitoring_script
+
+# Periodic smartd tests
+start_smartd_tests
+
+echo 'Send data to FastVPS...'
+if "$INSTALL_TO/$MONITORING_SCRIPT_NAME" --cron; then
+    echo 'Data sent successfully'
+else
+    echo 'Cannot run script in --cron mode'
+fi
+
+echo 'Checking disk system...'
+"$INSTALL_TO/$MONITORING_SCRIPT_NAME" --detect
 }
 
 #
